@@ -25,26 +25,42 @@
         /// </summary>
         private void InitializeComponent()
         {
-            PropertyText = new Label();
+            ResultText = new Label();
+            PropertyText = new RichTextBox();
             SuspendLayout();
+            // 
+            // ResultText
+            // 
+            ResultText.AutoSize = true;
+            ResultText.ForeColor = SystemColors.ControlLight;
+            ResultText.Location = new Point(615, 9);
+            ResultText.Name = "ResultText";
+            ResultText.Size = new Size(42, 15);
+            ResultText.TabIndex = 0;
+            ResultText.Text = "Result";
             // 
             // PropertyText
             // 
-            PropertyText.AutoSize = true;
-            PropertyText.ForeColor = SystemColors.ControlLight;
-            PropertyText.Location = new Point(12, 426);
+            PropertyText.BackColor = Color.Black;
+            PropertyText.BorderStyle = BorderStyle.FixedSingle;
+            PropertyText.Cursor = Cursors.IBeam;
+            PropertyText.ForeColor = Color.FromArgb(255, 221, 0);
+            PropertyText.Location = new Point(623, 482);
             PropertyText.Name = "PropertyText";
-            PropertyText.Size = new Size(96, 15);
-            PropertyText.TabIndex = 0;
-            PropertyText.Text = "CameraDirecion";
+            PropertyText.ReadOnly = true;
+            PropertyText.Size = new Size(447, 98);
+            PropertyText.TabIndex = 1;
+            PropertyText.Text = "Properties";
             // 
             // RayMarchingForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.ActiveCaptionText;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(1082, 592);
             Controls.Add(PropertyText);
+            Controls.Add(ResultText);
+            Cursor = Cursors.Cross;
             Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             Name = "RayMarchingForm";
             Text = "Raymarching";
@@ -57,6 +73,7 @@
 
         #endregion
 
-        private Label PropertyText;
+        private Label ResultText;
+        private RichTextBox PropertyText;
     }
 }

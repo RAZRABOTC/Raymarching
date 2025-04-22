@@ -6,13 +6,34 @@ namespace Raymarching
 {
     public partial class RayMarchingForm : Form
     {
+        private GameObject[] objects;
+        private Vector2 origin = new(100, 500);
+
         public RayMarchingForm()
         {
             InitializeComponent();
+            objects = [new (new Rectangle(new Point(300, 300) ,new Size(100,200)) , ShapeType.Rectangle) , new(new Rectangle(new Point(100, 500), new Size(100, 100)), ShapeType.Circle)];
+        }
+
+        private void DrawObjects(Graphics graphics, Pen pen)
+        {
+            pen ??= new Pen(Color.FromArgb(100, 231, 233));
+            foreach(var obj in objects)
+            {
+                if (obj.ShapeType == ShapeType.Circle)
+                {
+                    graphics.DrawEllipse(pen, obj.Shape);
+                }
+                else if (obj.ShapeType == ShapeType.Rectangle)
+                {
+                    graphics.DrawRectangle(pen, obj.Shape);
+                }
+            }
         }
 
         private void RayMarchingForm_Paint(object sender, PaintEventArgs e)
         {
+            DrawObjects(e.Graphics , new Pen(Color.FromArgb(52,52,52)));
             DrawObjectsAndRay(e , Cursor.Position);
         }
 
@@ -22,49 +43,74 @@ namespace Raymarching
         }
 
         private void DrawObjectsAndRay(PaintEventArgs e , Point cursorPosition)
-        {
-            Vector2 circleScale = new Vector2(100, 100);
-            float circleRadius = circleScale.X / 2;
-            Vector2 circlePosition = new Vector2(400 + circleRadius, 200 + circleRadius);
-            Vector2 cameraPosition = new Vector2(300, circlePosition.Y + circleRadius);
-            Vector2 cameraDirection = Vectors.GetDirection(cameraPosition, new Vector2(cursorPosition.X, cursorPosition.Y));
+        { 
             Graphics graphics = e.Graphics;
-            Pen circlePen = new Pen(Color.FromArgb(255, 204, 0));
-            Pen circlePen2 = new Pen(Color.FromArgb(255, 21, 0));
-
-            PrintProperties(graphics, circlePen, circlePen2, cameraPosition, circlePosition, circleRadius, circleScale, cameraDirection, cursorPosition);
-            PrintResult(ConductRay(graphics, circlePen, circlePen2, cameraPosition, circlePosition, circleRadius, cameraDirection));
+            Pen circlePen = new Pen(Color.FromArgb(255, 21, 0));
+            PrintResult(ConductRay(graphics, circlePen, cursorPosition));
         }
 
-        private bool ConductRay(Graphics graphics , Pen circlePen , Pen circlePen2, Vector2 cameraPosition , Vector2 circlePosition , float circleRadius , Vector2 cameraDirection)
+        private bool ConductRay(Graphics graphics , Pen circlePen , Point cursorPosition)
         {
+            Vector2 direction = Vectors.GetDirection(origin, new (cursorPosition.X , cursorPosition.Y));
             const float oneDegree = MathF.PI / 180;
-            const float hitDistance = 2;
+            const float hitDistance = 1;
             const float maxDistance = 2000;
-            Vector2 rayPosition = cameraPosition;
+            Vector2 rayPosition = origin;
             while (true)
             {
-                float distance = Vectors.GetMagnitude(rayPosition, circlePosition) - circleRadius;
+                float distance = GetShortestDistance(rayPosition);
+                Debug.WriteLine("L " + objects[1].Shape.Location);
                 graphics.DrawEllipse(circlePen, rayPosition.X - distance, rayPosition.Y - distance, distance * 2, distance * 2);
                 Vector2 lastRayPosition = rayPosition;
-                var sinCosX = MathF.SinCos(oneDegree * cameraDirection.X * 90);
-                var sinCosY = MathF.SinCos(oneDegree * cameraDirection.Y * 90);
-                rayPosition = new(rayPosition.X + distance * sinCosX.Sin, rayPosition.Y + distance * sinCosY.Sin);
-                graphics.DrawEllipse(circlePen2, rayPosition.X, rayPosition.Y, 2, 2);
+                float sinX = MathF.Sin(oneDegree * direction.X * 90);
+                float sinY = MathF.Sin(oneDegree * direction.Y * 90);
+                rayPosition = new(rayPosition.X + distance * sinX, rayPosition.Y + distance * sinY);
+                graphics.DrawEllipse(circlePen, rayPosition.X, rayPosition.Y, 2, 2);
                 graphics.DrawLine(circlePen, lastRayPosition.X, lastRayPosition.Y, rayPosition.X, rayPosition.Y);
                 if (distance > maxDistance) return false;
                 if (distance < hitDistance) return true;
             }
         }
 
-        private void PrintProperties(Graphics graphics , Pen circlePen , Pen circlePen2 , Vector2 cameraPosition , Vector2 circlePosition , float circleRadius, Vector2 circleScale , Vector2 cameraDirection , Point cursorPosition)
+        private float GetShortestDistance(Vector2 origin)
         {
-            graphics.DrawEllipse(circlePen2, cameraPosition.X, cameraPosition.Y, 2, 2);
-            graphics.DrawEllipse(circlePen2, circlePosition.X - circleRadius, circlePosition.Y - circleRadius, circleScale.X, circleScale.Y);
-            graphics.DrawEllipse(circlePen2, circlePosition.X, circlePosition.Y, 2, 2);
+            float currentShortestDistance = float.MaxValue;
+            foreach (GameObject obj in objects)
+            {
+                Debug.WriteLine(currentShortestDistance);
+                float currentDistance;
+                if (obj.ShapeType == ShapeType.Circle)
+                {
+                    currentDistance = GetDistanceFromCircle(obj , origin);
+                }
+                else
+                {
+                    currentDistance = GetDistanceFromRectangle(obj , origin);
+                }
+                currentShortestDistance = Math.Min(currentShortestDistance, currentDistance);
+            }
+            return currentShortestDistance;
+        }
+
+        private float GetDistanceFromCircle(GameObject circle, Vector2 origin)
+        {
+            return Vectors.GetMagnitude(origin, new(circle.Shape.Location.X + circle.Shape.Width/2, circle.Shape.Location.Y + circle.Shape.Width/2)) - circle.Shape.Width/2;
+        }
+        private float GetDistanceFromRectangle(GameObject rectangle, Vector2 origin)
+        {
+            return Vectors.GetMagnitude(origin, origin.Clamp(new Vector2(rectangle.Shape.Left, rectangle.Shape.Top), new(rectangle.Shape.Right, rectangle.Shape.Bottom)));
+        }
+
+
+        private void PrintProperties(Graphics graphics , Pen circlePen, Vector2 cameraPosition , Vector2 circlePosition , float circleRadius, Vector2 circleScale , Vector2 cameraDirection , Point cursorPosition)
+        {
+            graphics.DrawEllipse(circlePen, cameraPosition.X, cameraPosition.Y, 2, 2);
+            graphics.DrawEllipse(circlePen, circlePosition.X - circleRadius, circlePosition.Y - circleRadius, circleScale.X, circleScale.Y);
+            graphics.DrawEllipse(circlePen, circlePosition.X, circlePosition.Y, 2, 2);
             PropertyText.Text = "Camera direction :" + cameraDirection.ToString() + ", Circle Position:" + circlePosition.ToString() + "Cursor position" + cursorPosition.ToString() + "\n Circle scale : " 
                 + circleScale.ToString();
         }
+
 
         private void PrintResult(bool result)
         {
@@ -80,4 +126,24 @@ namespace Raymarching
             }
         }
     }
+    public class GameObject
+    {
+        public Rectangle Shape { get; private set; }
+        public ShapeType ShapeType { get; private set; }
+        public GameObject(Rectangle shape , ShapeType shapeType)
+        {
+            Shape = shape;
+            ShapeType = shapeType;
+        }
+        public Point GetCenter()
+        {
+            return new(Shape.X + Shape.Width / 2 + Shape.Y + Shape.Height / 2);
+        }
+    }
+
+    public enum ShapeType
+    {
+        Circle, Rectangle
+    }
+    
 }

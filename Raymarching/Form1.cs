@@ -34,7 +34,7 @@ namespace Raymarching
         private void RayMarchingForm_Paint(object sender, PaintEventArgs e)
         {
             DrawObjects(e.Graphics , new Pen(Color.FromArgb(52,52,52)));
-            DrawObjectsAndRay(e , Cursor.Position);
+            ConductRay(e.Graphics , new Pen(Color.FromArgb(252, 186, 3)) , Cursor.Position);
         }
 
         private void RayMarchingForm_MouseMove(object sender, MouseEventArgs e)
@@ -42,19 +42,14 @@ namespace Raymarching
             Invalidate();
         }
 
-        private void DrawObjectsAndRay(PaintEventArgs e , Point cursorPosition)
-        { 
-            Graphics graphics = e.Graphics;
-            Pen circlePen = new Pen(Color.FromArgb(255, 21, 0));
-            PrintResult(ConductRay(graphics, circlePen, cursorPosition));
-        }
-
         private bool ConductRay(Graphics graphics , Pen circlePen , Point cursorPosition)
         {
             Vector2 direction = Vectors.GetDirection(origin, new (cursorPosition.X , cursorPosition.Y));
+            if (direction == default) return false;
             const float oneDegree = MathF.PI / 180;
             const float hitDistance = 1;
             const float maxDistance = 2000;
+            PrintProperties(direction, cursorPosition);
             Vector2 rayPosition = origin;
             while (true)
             {
@@ -102,13 +97,9 @@ namespace Raymarching
         }
 
 
-        private void PrintProperties(Graphics graphics , Pen circlePen, Vector2 cameraPosition , Vector2 circlePosition , float circleRadius, Vector2 circleScale , Vector2 cameraDirection , Point cursorPosition)
+        private void PrintProperties(Vector2 cameraDirection , Point cursorPosition)
         {
-            graphics.DrawEllipse(circlePen, cameraPosition.X, cameraPosition.Y, 2, 2);
-            graphics.DrawEllipse(circlePen, circlePosition.X - circleRadius, circlePosition.Y - circleRadius, circleScale.X, circleScale.Y);
-            graphics.DrawEllipse(circlePen, circlePosition.X, circlePosition.Y, 2, 2);
-            PropertyText.Text = "Camera direction :" + cameraDirection.ToString() + ", Circle Position:" + circlePosition.ToString() + "Cursor position" + cursorPosition.ToString() + "\n Circle scale : " 
-                + circleScale.ToString();
+            PropertyText.Text = "Origin direction :" + cameraDirection.ToString() + "Cursor position" + cursorPosition.ToString() + "\n";
         }
 
 
